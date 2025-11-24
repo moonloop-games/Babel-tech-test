@@ -885,11 +885,11 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Here is a simple enemy which patrols back and forth. Write logic in the
     ObstacleJumper script that identifies obstacles it can jump over, and jumps over
-    the obstacles. \n\n1. It should adjust its jump time to ensure it can clear obstacles
-    of different heights.\n2. It should recognize obstacles it can't jump over, and
-    instead just turn around.\n3. It's fine for it to land on top of an obstacle.\n\n(bonus)
-    There are also 2 other misc. problems with this character. Can you identify and
-    fix them?"
+    the obstacles. \n\n1. It should adjust its jump timing to ensure it can clear
+    obstacles of different heights.\n2. It should recognize obstacles it can't jump
+    over, and instead just turn around.\n3. It's fine for it to land on top of an
+    obstacle.\n\n(bonus) There are also 2 other misc. problems with this character.
+    Can you identify and fix them?"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
