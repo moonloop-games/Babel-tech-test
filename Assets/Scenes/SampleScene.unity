@@ -1044,7 +1044,7 @@ GameObject:
   - component: {fileID: 817374536}
   m_Layer: 6
   m_Name: ground
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1178,7 +1178,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 864950879}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: obstacles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1523,6 +1523,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1581787896322597729, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: jumpSpeed
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2783070188218423163, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_Size.x
+      value: 0.60569286
+      objectReference: {fileID: 0}
+    - target: {fileID: 2783070188218423163, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_Size.y
+      value: 1.2024205
+      objectReference: {fileID: 0}
+    - target: {fileID: 2783070188218423163, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_Offset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2783070188218423163, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.5996655
+      objectReference: {fileID: 0}
+    - target: {fileID: 2783070188218423163, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_Direction
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3355993714400498136, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.9
@@ -1563,9 +1587,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3964918566729812781, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: farJumpDistance
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964918566729812781, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: closeJumpDistance
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964918566729812781, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: obstacleLayer.m_Bits
+      value: 128
+      objectReference: {fileID: 0}
     - target: {fileID: 8041984966628603162, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
       propertyPath: m_Name
       value: character
+      objectReference: {fileID: 0}
+    - target: {fileID: 8272197283104389236, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: OnHitWall.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8272197283104389236, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: OnHitWall.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8647609674940703271, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_Mass
+      value: 1.1356608
+      objectReference: {fileID: 0}
+    - target: {fileID: 8647609674940703271, guid: 9312ea5f8c8b349af9827cfbbe456782, type: 3}
+      propertyPath: m_UseAutoMass
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

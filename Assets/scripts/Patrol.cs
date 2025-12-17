@@ -39,7 +39,7 @@ public class Patrol : MonoBehaviour
         }
     }
 
-    void ReverseDirection()
+    public void ReverseDirection()
     {
         walkDirection = -walkDirection;
     }

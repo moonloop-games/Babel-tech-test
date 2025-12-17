@@ -3,19 +3,36 @@ using UnityEngine;
 public class Jumper : MonoBehaviour
 {
     public Rigidbody2D rb;
+    public float jumpSpeed = 12;
 
-    public float jumpSpeed = 5;
+    private bool isGrounded = false;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
+        }
     }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
+        }
+    }
+
+
+
 
     public void Jump() => Jump(jumpSpeed);
 
     public void Jump(float speed)
     {
-        rb.linearVelocityY += jumpSpeed;
+        if (isGrounded)
+        {
+            rb.linearVelocityY += jumpSpeed;
+        }
     }
 }
