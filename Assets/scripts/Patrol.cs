@@ -7,7 +7,8 @@ public class Patrol : MonoBehaviour
 
     public float walkSpeed = 5;
 
-    int walkDirection = 1;
+    // 1 is right -1 is left
+    public int walkDirection = 1;
 
     [Space, SerializeField]
     UnityEvent OnHitWall;
@@ -15,7 +16,7 @@ public class Patrol : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // FixedUpdate is called once per physics update frame, with a fixed delta time
@@ -37,7 +38,7 @@ public class Patrol : MonoBehaviour
             ReverseDirection();
         }
     }
-    
+
     void ReverseDirection()
     {
         walkDirection = -walkDirection;
