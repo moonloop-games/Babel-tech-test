@@ -3,15 +3,53 @@ using UnityEngine;
 public class Jumper : MonoBehaviour
 {
     public Rigidbody2D rb;
-    public float jumpSpeed = 12;
+    public LayerMask obstacleLayer;
+    public LayerMask groundLayer;
 
-    private bool isGrounded = false;
+    [Header("Jump Settings")]
+    public float jumpPower = 15;
+
+    [Header("Jump Info")]
+    public float maxJumpHeight;
+    public float timeInAir;
+
+    [Header("Jump State")]
+    public bool isGrounded = false;
+    private bool isOnObstacle = false;
+
+    void Start()
+    {
+        CalculateJumpInfo();
+    }
+
+    private void CalculateJumpInfo()
+    {
+        // Physics formula: maxHeight = (velocity^2) / (2 * gravity)
+        float gravity = Mathf.Abs(Physics2D.gravity.y * rb.gravityScale);
+        maxJumpHeight = jumpPower * jumpPower / (2f * gravity);
+
+        // Physics formula: timeInAir = 2 * velocity / gravity
+        timeInAir = 2f * jumpPower / gravity;
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            isGrounded = true;
+            foreach (ContactPoint2D contact in collision.contacts)
+            {
+                if (contact.normal.y > 0.5f) // we're on top of something
+                {
+                    isGrounded = true;
+
+                    if (((1 << collision.gameObject.layer) & obstacleLayer) != 0)
+                    {
+                        isOnObstacle = true;
+                    }
+
+                    return;
+                }
+            }
         }
     }
 
@@ -20,19 +58,17 @@ public class Jumper : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = false;
+            isOnObstacle = false;
         }
     }
 
-
-
-
-    public void Jump() => Jump(jumpSpeed);
+    public void Jump() => Jump(jumpPower);
 
     public void Jump(float speed)
     {
-        if (isGrounded)
+        if (isGrounded && !isOnObstacle)
         {
-            rb.linearVelocityY += jumpSpeed;
+            rb.linearVelocityY = jumpPower;
         }
     }
 }
