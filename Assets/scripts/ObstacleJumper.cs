@@ -1,3 +1,4 @@
+using Mono.Cecil.Cil;
 using UnityEngine;
 
 // Use this component to write your logic for the obstacle jumper.
@@ -16,12 +17,33 @@ public class ObstacleJumper : MonoBehaviour
     public LayerMask obstacleLayer;
 
     [Header("Detection Settings")]
-    public float raycastDistance = 5f;
-    public float maxJumpableHeight = 2f;
+    public float raycastDistance;
 
     [Header("Jump Timing")]
     public float closeJumpDistance;
     public float farJumpDistance;
+
+
+    void Start()
+    {
+        CalculateJumpTiming();
+    }
+
+    void OnValidate()
+    {
+        if (jumper != null)
+        {
+            CalculateJumpTiming();
+        }
+    }
+
+    private void CalculateJumpTiming()
+    {
+        raycastDistance = jumper.maxJumpDistance * 1.2f;
+
+        closeJumpDistance = jumper.maxJumpDistance * 0.3f;
+        farJumpDistance = jumper.maxJumpDistance * 0.6f;
+    }
     void FixedUpdate()
     {
         // get the current direction the patrol is walking
@@ -36,50 +58,61 @@ public class ObstacleJumper : MonoBehaviour
         // cast a ray from character position in the walk direction to detect obstacles
         RaycastHit2D hit = Physics2D.Raycast(character, rayDirection, raycastDistance, obstacleLayer);
 
-        // when we hit something we check it
         if (hit)
         {
-            // get how far away the obstacle is from the character
-            float distanceToObstacle = hit.distance;
+            Debug.DrawRay(character, rayDirection * hit.distance, Color.red);
 
-            // then we detect height and see if its jumpable
-            // calculate the height of the obstacle using an upward raycast
+            // Get the height of the obstacle
             float obstacleHeight = GetObstacleHeight(hit.point);
 
-            // check if the obstacle height is within our jumping capability
-            bool isJumpable = obstacleHeight <= maxJumpableHeight;
+            // Check if we can jump over it
+            bool isJumpable = obstacleHeight > 0 && obstacleHeight <= jumper.maxJumpHeight;
 
-            // if it is jumpable with the distance provided, we make the jumper jump
+            Debug.Log($"Obstacle Height: {obstacleHeight}, Max Jump Height: {jumper.maxJumpHeight}, Can Jump: {isJumpable}");
+
             if (isJumpable)
             {
-                // TODO figure out this jump timing logic
-                float jumpDistance = 2;
+                // Calculate optimal jump distance based on height
+                float heightRatio = obstacleHeight / jumper.maxJumpHeight;
+                float optimalJumpDistance = Mathf.Lerp(farJumpDistance, closeJumpDistance, heightRatio);
 
-                if (distanceToObstacle <= jumpDistance)
+                if (hit.distance <= optimalJumpDistance)
                 {
                     jumper.Jump();
                 }
             }
+            else if (obstacleHeight > jumper.maxJumpHeight)
+            {
+                if (hit.distance <= 1f)
+                {
+                    patrol.ReverseDirection();
+                }
+            }
         }
+        else
+        {
+            Debug.DrawRay(character, rayDirection * raycastDistance, Color.green);
+        }
+
     }
-
-    // TODO implement a function to determine to tell patrol to turn around if obstacle is not jumpable
-
 
     private float GetObstacleHeight(Vector2 hitPoint)
     {
-        Vector2 origin = new Vector2(hitPoint.x, transform.position.y);
+        // Cast a ray DOWN from above the obstacle to find its top
+        Vector2 rayOrigin = new Vector2(hitPoint.x, transform.position.y + 10f);
+        RaycastHit2D topHit = Physics2D.Raycast(rayOrigin, Vector2.down, 20f, obstacleLayer);
 
-        // cast a ray straight up from the base to find the top of the obstacle
-        RaycastHit2D upwardHit = Physics2D.Raycast(origin, Vector2.up, 10f, obstacleLayer);
-
-        if (upwardHit)
+        if (topHit)
         {
-            // calculate height as difference between obstacle top and character position
-            float height = upwardHit.point.y - transform.position.y;
+            // The height is the difference between the top of the obstacle and the character's position
+            float height = topHit.point.y - transform.position.y;
 
-            return Mathf.Max(0, height);
+            // Debug visualization - yellow ray showing the downward cast
+            Debug.DrawRay(rayOrigin, Vector2.down * topHit.distance, Color.yellow);
+
+            return Mathf.Max(0, height); // Don't return negative heights
         }
+
         return 0;
     }
 }

@@ -4,13 +4,15 @@ public class Jumper : MonoBehaviour
 {
     public Rigidbody2D rb;
     public LayerMask obstacleLayer;
-    public LayerMask groundLayer;
+    public Patrol patrol;
 
     [Header("Jump Settings")]
     public float jumpPower = 15;
 
     [Header("Jump Info")]
     public float maxJumpHeight;
+    public float maxJumpDistance;
+
     public float timeInAir;
 
     [Header("Jump State")]
@@ -30,6 +32,11 @@ public class Jumper : MonoBehaviour
 
         // Physics formula: timeInAir = 2 * velocity / gravity
         timeInAir = 2f * jumpPower / gravity;
+
+        if (patrol != null)
+        {
+            maxJumpDistance = patrol.walkSpeed * timeInAir;
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -38,7 +45,7 @@ public class Jumper : MonoBehaviour
         {
             foreach (ContactPoint2D contact in collision.contacts)
             {
-                if (contact.normal.y > 0.5f) // we're on top of something
+                if (contact.normal.y > 0.5f)
                 {
                     isGrounded = true;
 
