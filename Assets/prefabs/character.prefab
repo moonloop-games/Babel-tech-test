@@ -143,6 +143,13 @@ MonoBehaviour:
   rb: {fileID: 8647609674940703271}
   jumper: {fileID: 1581787896322597729}
   patrol: {fileID: 8272197283104389236}
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  raycastDistance: 5
+  maxJumpableHeight: 2
+  closeJumpDistance: 0
+  farJumpDistance: 0
 --- !u!114 &8272197283104389236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -157,6 +164,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Patrol
   rb: {fileID: 8647609674940703271}
   walkSpeed: 3
+  walkDirection: 1
   OnHitWall:
     m_PersistentCalls:
       m_Calls: []
@@ -237,4 +245,4 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
