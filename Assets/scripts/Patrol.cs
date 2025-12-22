@@ -32,7 +32,9 @@ public class Patrol : MonoBehaviour
         // If we collided with something relatively wall-shaped, reverse direction
         var contact = collision.GetContact(0);
         float dot = Vector2.Dot(contact.normal, Vector2.right);
-        if (Mathf.Abs(dot) > 0.5f)
+
+        // added a check for contact is not pointing upward (so we dont reverse on corners)
+        if (Mathf.Abs(dot) > 0.5f && contact.normal.y < 0.5f)
         {
             OnHitWall.Invoke();
             ReverseDirection();

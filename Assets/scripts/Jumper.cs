@@ -17,7 +17,7 @@ public class Jumper : MonoBehaviour
 
     [Header("Jump State")]
     public bool isGrounded = false;
-    private bool isOnObstacle = false;
+    public bool isOnObstacle = false;
 
     void Start()
     {
@@ -33,10 +33,8 @@ public class Jumper : MonoBehaviour
         // Physics formula: timeInAir = 2 * velocity / gravity
         timeInAir = 2f * jumpPower / gravity;
 
-        if (patrol != null)
-        {
-            maxJumpDistance = patrol.walkSpeed * timeInAir;
-        }
+
+        maxJumpDistance = patrol.walkSpeed * timeInAir;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -49,9 +47,14 @@ public class Jumper : MonoBehaviour
                 {
                     isGrounded = true;
 
+                    // check if we're on an obstacle or regular ground
                     if (((1 << collision.gameObject.layer) & obstacleLayer) != 0)
                     {
                         isOnObstacle = true;
+                    }
+                    else
+                    {
+                        isOnObstacle = false;
                     }
 
                     return;
@@ -73,7 +76,7 @@ public class Jumper : MonoBehaviour
 
     public void Jump(float speed)
     {
-        if (isGrounded && !isOnObstacle)
+        if (isGrounded)
         {
             rb.linearVelocityY = jumpPower;
         }
