@@ -10,32 +10,16 @@ public class Jumper : MonoBehaviour
     public float jumpPower = 15;
 
     [Header("Jump Info")]
-    public float maxJumpHeight;
-    public float maxJumpDistance;
+    float gravity => Mathf.Abs(Physics2D.gravity.y * rb.gravityScale);
+    public float maxJumpHeight => jumpPower * jumpPower / (2f * gravity);
 
-    public float timeInAir;
+    public float maxJumpDistance => patrol.walkSpeed * timeInAir;
+
+    public float timeInAir => 2f * jumpPower / gravity;
 
     [Header("Jump State")]
     public bool isGrounded = false;
     public bool isOnObstacle = false;
-
-    void Start()
-    {
-        CalculateJumpInfo();
-    }
-
-    private void CalculateJumpInfo()
-    {
-        // Physics formula: maxHeight = (velocity^2) / (2 * gravity)
-        float gravity = Mathf.Abs(Physics2D.gravity.y * rb.gravityScale);
-        maxJumpHeight = jumpPower * jumpPower / (2f * gravity);
-
-        // Physics formula: timeInAir = 2 * velocity / gravity
-        timeInAir = 2f * jumpPower / gravity;
-
-
-        maxJumpDistance = patrol.walkSpeed * timeInAir;
-    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {

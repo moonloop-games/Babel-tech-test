@@ -18,11 +18,10 @@ public class ObstacleJumper : MonoBehaviour
 
     [Header("Detection Settings")]
     public float scanDistance = 100f;
-    public float raycastDistance;
 
-    [Header("Jump Timing")]
-    public float closeJumpDistance;
-    public float farJumpDistance;
+    private float raycastDistance => jumper.maxJumpDistance * 1.2f;
+    private float closeJumpDistance => jumper.maxJumpDistance * 0.3f;
+    private float farJumpDistance => jumper.maxJumpDistance * 0.6f;
 
     private List<ObstacleData> obstaclesRight = new List<ObstacleData>();
     private List<ObstacleData> obstaclesLeft = new List<ObstacleData>();
@@ -31,27 +30,15 @@ public class ObstacleJumper : MonoBehaviour
 
     private struct ObstacleData
     {
-        public float distance;
-        public float height;
-        public Vector2 position;
+        public float obstacleTop;          // absolute Y position of obstacle top
+        public float obstacleStart;        // X where obstacle starts (from our scan direction)
+        public float obstacleEnd;          // X where obstacle ends (far edge)
+        public Collider2D collider;        // reference to the collider
     }
 
     void Start()
     {
-        CalculateJumpTiming();
         ScanAllObstacles();
-    }
-
-    void OnValidate()
-    {
-        CalculateJumpTiming();
-    }
-
-    private void CalculateJumpTiming()
-    {
-        raycastDistance = jumper.maxJumpDistance * 1.2f;
-        closeJumpDistance = jumper.maxJumpDistance * 0.3f;
-        farJumpDistance = jumper.maxJumpDistance * 0.6f;
     }
 
     private void ScanAllObstacles()
@@ -74,28 +61,57 @@ public class ObstacleJumper : MonoBehaviour
         // get all obstacles in this direction
         RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, scanDistance, obstacleLayer);
 
-        // sort them by distance
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
         foreach (RaycastHit2D hit in hits)
         {
-            if (hit.distance < 0.3f) continue;
+            // skip if we've already added this collider
+            bool alreadyAdded = false;
+            foreach (var obs in obstacleList)
+            {
+                if (obs.collider == hit.collider)
+                {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (alreadyAdded) continue;
 
-            float height = GetObstacleHeight(hit.point);
+            Bounds bounds = hit.collider.bounds;
+
+            // determine obstacleStart and obstacleEnd based on scan direction
+            float obstacleStart, obstacleEnd;
+            if (direction.x > 0) // scanning right
+            {
+                obstacleStart = bounds.min.x;  // left edge is where it starts
+                obstacleEnd = bounds.max.x;    // right edge is where it ends
+            }
+            else // scanning left
+            {
+                obstacleStart = bounds.max.x;  // right edge is where it starts 
+                obstacleEnd = bounds.min.x;    // left edge is where it ends
+            }
+
+            float obstacleTop = bounds.max.y;  // top of the collider
 
             ObstacleData data = new ObstacleData
             {
-                distance = hit.distance,
-                height = height,
-                position = hit.point
+                obstacleTop = obstacleTop,
+                obstacleStart = obstacleStart,
+                obstacleEnd = obstacleEnd,
+                collider = hit.collider
             };
 
             obstacleList.Add(data);
 
-            Debug.Log($"Found obstacle at distance {data.distance}, height {data.height} in direction {direction}");
-
-            Debug.DrawLine(origin, hit.point, direction == Vector2.right ? Color.pink : Color.orange, 5f);
+            Debug.Log($"Found obstacle: obstacleStart={obstacleStart}, obstacleEnd={obstacleEnd}, obstacleTop={obstacleTop}");
         }
+
+        // sort by distance from origin
+        obstacleList.Sort((a, b) =>
+        {
+            float distA = Mathf.Abs(a.obstacleStart - origin.x);
+            float distB = Mathf.Abs(b.obstacleStart - origin.x);
+            return distA.CompareTo(distB);
+        });
     }
 
     void FixedUpdate()
@@ -106,22 +122,48 @@ public class ObstacleJumper : MonoBehaviour
         }
         wasGrounded = jumper.isGrounded;
 
-        int direction = patrol.walkDirection;
+        int direction = patrol.WalkDirection;
         Vector2 character = transform.position;
         Vector2 rayDirection = new Vector2(direction, 0);
 
         List<ObstacleData> currentObstacles = direction > 0 ? obstaclesRight : obstaclesLeft;
 
-        // find the next obstacle we haven't passed yet
+        // find current obstacle we're standing on
+        ObstacleData? currentPlatform = null;
+        if (jumper.isOnObstacle)
+        {
+            foreach (var obs in obstaclesRight)
+            {
+                if (character.x >= obs.collider.bounds.min.x && character.x <= obs.collider.bounds.max.x &&
+                    Mathf.Abs(character.y - obs.obstacleTop) < 1f)
+                {
+                    currentPlatform = obs;
+                    break;
+                }
+            }
+            if (!currentPlatform.HasValue)
+            {
+                foreach (var obs in obstaclesLeft)
+                {
+                    if (character.x >= obs.collider.bounds.min.x && character.x <= obs.collider.bounds.max.x &&
+                        Mathf.Abs(character.y - obs.obstacleTop) < 1f)
+                    {
+                        currentPlatform = obs;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // find the next obstacle ahead of us
         ObstacleData? nextObstacle = null;
         foreach (var obstacle in currentObstacles)
         {
-            // calculate current distance to this obstacle based on direction
-            float distanceCheck = direction > 0
-                ? obstacle.position.x - character.x  // if moving right
-                : character.x - obstacle.position.x; // if moving left
+            float distanceToStart = direction > 0
+                ? obstacle.obstacleStart - character.x
+                : character.x - obstacle.obstacleStart;
 
-            if (distanceCheck > 0.2f) // a small buffer to avoid re-checking the same obstacle
+            if (distanceToStart > 0.2f)
             {
                 nextObstacle = obstacle;
                 break;
@@ -131,34 +173,52 @@ public class ObstacleJumper : MonoBehaviour
         if (nextObstacle.HasValue)
         {
             ObstacleData obstacle = nextObstacle.Value;
-            float currentDistance = direction > 0
-                ? obstacle.position.x - character.x
-                : character.x - obstacle.position.x;
+            float distanceToStart = direction > 0
+                ? obstacle.obstacleStart - character.x
+                : character.x - obstacle.obstacleStart;
 
-            Debug.DrawRay(character, rayDirection * currentDistance, Color.red);
+            Debug.DrawRay(character, rayDirection * distanceToStart, Color.red);
 
-            // Check if jumpable
-            bool isJumpable = obstacle.height <= jumper.maxJumpHeight;
+            // calculate height relative to current position
+            float heightToJump = obstacle.obstacleTop - character.y;
+            bool isJumpable = heightToJump <= jumper.maxJumpHeight;
 
-            Debug.Log($"Next obstacle - Distance: {currentDistance}, Height: {obstacle.height}, Jumpable: {isJumpable}");
+            Debug.Log($"Next obstacle - Distance: {distanceToStart}, HeightToJump: {heightToJump}, Jumpable: {isJumpable}");
 
             if (isJumpable)
             {
-                // Calculate optimal jump distance
-                float heightRatio = obstacle.height / jumper.maxJumpHeight;
+                float heightRatio = Mathf.Max(0, heightToJump) / jumper.maxJumpHeight;
                 float optimalJumpDistance = Mathf.Lerp(farJumpDistance, closeJumpDistance, heightRatio);
 
-                if (currentDistance <= optimalJumpDistance)
+                if (distanceToStart <= optimalJumpDistance)
                 {
                     jumper.Jump();
                 }
             }
             else
             {
-                // turn around
-                if (currentDistance <= 1f)
+                if (distanceToStart <= 1f)
                 {
                     patrol.ReverseDirection();
+                }
+            }
+        }
+        else if (currentPlatform.HasValue)
+        {
+            float edgeX = direction > 0 ? currentPlatform.Value.obstacleEnd : currentPlatform.Value.obstacleStart;
+            float distanceToEdge = Mathf.Abs(edgeX - character.x);
+
+            Debug.Log($"On platform, distance to edge: {distanceToEdge}");
+
+            if (distanceToEdge <= 0.5f)
+            {
+                if (IsWallAhead(character, direction))
+                {
+                    patrol.ReverseDirection();
+                }
+                else
+                {
+                    jumper.Jump();
                 }
             }
         }
@@ -167,28 +227,11 @@ public class ObstacleJumper : MonoBehaviour
             Debug.DrawRay(character, rayDirection * scanDistance, Color.green);
         }
     }
-
-    private float GetObstacleHeight(Vector2 hitPoint)
+    private bool IsWallAhead(Vector2 origin, int direction)
     {
-        float maxHeight = 0f;
+        Vector2 rayDirection = new Vector2(direction, 0);
+        RaycastHit2D hit = Physics2D.Raycast(origin, rayDirection, 2f);
 
-        // this was specifically for something like triangles where the highest point is different
-        // cast multiple rays across a range to find the highest point
-        // probably a better way to do this but this works for now
-        for (float offset = -1f; offset <= 1f; offset += 0.5f)
-        {
-            Vector2 rayOrigin = new Vector2(hitPoint.x + offset, transform.position.y + 10f);
-            RaycastHit2D topHit = Physics2D.Raycast(rayOrigin, Vector2.down, 20f, obstacleLayer);
-
-            if (topHit)
-            {
-                float height = topHit.point.y - transform.position.y;
-                maxHeight = Mathf.Max(maxHeight, height);
-
-                Debug.DrawRay(rayOrigin, Vector2.down * topHit.distance, Color.yellow);
-            }
-        }
-
-        return Mathf.Max(0, maxHeight);
+        return hit && hit.collider.CompareTag("Wall");
     }
 }

@@ -8,7 +8,8 @@ public class Patrol : MonoBehaviour
     public float walkSpeed = 5;
 
     // 1 is right -1 is left
-    public int walkDirection = 1;
+    int _walkDirection = 1;
+    public int WalkDirection => _walkDirection;
 
     [Space, SerializeField]
     UnityEvent OnHitWall;
@@ -22,7 +23,7 @@ public class Patrol : MonoBehaviour
     // FixedUpdate is called once per physics update frame, with a fixed delta time
     void FixedUpdate()
     {
-        rb.linearVelocityX = walkSpeed * walkDirection;
+        rb.linearVelocityX = walkSpeed * _walkDirection;
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -43,6 +44,6 @@ public class Patrol : MonoBehaviour
 
     public void ReverseDirection()
     {
-        walkDirection = -walkDirection;
+        _walkDirection = -_walkDirection;
     }
 }
