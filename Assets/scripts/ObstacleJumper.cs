@@ -10,7 +10,6 @@ using UnityEngine;
 
 public class ObstacleJumper : MonoBehaviour
 {
-    public Rigidbody2D rb;
     public Jumper jumper;
     public Patrol patrol;
 
@@ -18,10 +17,6 @@ public class ObstacleJumper : MonoBehaviour
 
     [Header("Detection Settings")]
     public float scanDistance = 100f;
-
-    private float raycastDistance => jumper.maxJumpDistance * 1.2f;
-    private float closeJumpDistance => jumper.maxJumpDistance * 0.3f;
-    private float farJumpDistance => jumper.maxJumpDistance * 0.6f;
 
     private List<ObstacleData> obstaclesRight = new List<ObstacleData>();
     private List<ObstacleData> obstaclesLeft = new List<ObstacleData>();
@@ -126,6 +121,9 @@ public class ObstacleJumper : MonoBehaviour
         Vector2 character = transform.position;
         Vector2 rayDirection = new Vector2(direction, 0);
 
+        // always draw the jump parabola
+        DrawJumpParabola(character, direction);
+
         List<ObstacleData> currentObstacles = direction > 0 ? obstaclesRight : obstaclesLeft;
 
         // find current obstacle we're standing on
@@ -187,10 +185,7 @@ public class ObstacleJumper : MonoBehaviour
 
             if (isJumpable)
             {
-                float heightRatio = Mathf.Max(0, heightToJump) / jumper.maxJumpHeight;
-                float optimalJumpDistance = Mathf.Lerp(farJumpDistance, closeJumpDistance, heightRatio);
-
-                if (distanceToStart <= optimalJumpDistance)
+                if (CanJumpOverObstacle(obstacle, direction))
                 {
                     jumper.Jump();
                 }
@@ -233,5 +228,54 @@ public class ObstacleJumper : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(origin, rayDirection, 2f);
 
         return hit && hit.collider.CompareTag("Wall");
+    }
+
+    private void DrawJumpParabola(Vector2 startPos, int direction)
+    {
+        float walkSpeed = patrol.walkSpeed;
+        float jumpPower = jumper.jumpPower;
+        float gravity = Mathf.Abs(Physics2D.gravity.y) * jumper.GetComponent<Rigidbody2D>().gravityScale;
+        float timeInAir = jumper.timeInAir;
+
+        Vector2 prevPoint = startPos;
+        for (float t = 0f; t <= timeInAir; t += 0.02f)
+        {
+            float x = startPos.x + (walkSpeed * direction * t);
+            float y = startPos.y + (jumpPower * t) - (0.5f * gravity * t * t);
+            Vector2 point = new Vector2(x, y);
+            Debug.DrawLine(prevPoint, point, Color.yellow);
+            prevPoint = point;
+        }
+    }
+
+    private bool CanJumpOverObstacle(ObstacleData obstacle, int direction)
+    {
+        Vector2 startPos = transform.position;
+        float walkSpeed = patrol.walkSpeed;
+        float jumpPower = jumper.jumpPower;
+        float gravity = Mathf.Abs(Physics2D.gravity.y) * jumper.GetComponent<Rigidbody2D>().gravityScale;
+        float timeInAir = jumper.timeInAir;
+
+        float obsTop = obstacle.obstacleTop;
+        float distanceToObstacle = direction > 0
+            ? obstacle.collider.bounds.min.x - startPos.x // going right
+            : startPos.x - obstacle.collider.bounds.max.x;  // going left
+
+        // calculate when we'd reach the obstacle
+        float intersectionTime = distanceToObstacle / walkSpeed;
+
+        // calculate our height at that moment
+        float heightAtObstacle = startPos.y + (jumpPower * intersectionTime) - (0.5f * gravity * intersectionTime * intersectionTime);
+
+        // can we clear the obstacle at the moment we reach it?
+        bool canClear = heightAtObstacle >= obsTop;
+
+        // only jump if we're at the right distance
+        bool inRange = intersectionTime > 0.1f && intersectionTime <= timeInAir * 0.8f;
+
+        Debug.Log($"intersectionTime={intersectionTime}, heightAtObstacle={heightAtObstacle}, obsTop={obsTop}");
+        Debug.Log($"canClear={canClear}, inRange={inRange}");
+
+        return canClear && inRange;
     }
 }
