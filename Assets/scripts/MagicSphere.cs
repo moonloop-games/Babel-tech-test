@@ -11,7 +11,7 @@ public class MagicSphere : MonoBehaviour
 
     void OnDestroy()
     {
-        magicBall.onBallBounce = DetectMagicBallBounce;
+        magicBall.onBallBounce -= DetectMagicBallBounce;
 
     }
 

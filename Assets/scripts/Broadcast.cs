@@ -1,11 +1,22 @@
+using System;
 using UnityEngine;
 
 public static class Broadcast
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    /// <summary>
-    /// test text
-    /// </summary>
     public static BouncyBall.BallBounceHandler onBallBounce;
+
+    public static Action<BallDude> onBallInitialise;
+
+    public static Action<Ability> onCharacterInitialise;
+
+    public static Action<GameObject, Material> onBallChangeColour;
+
+    public static Action<GameObject, float> onBallSpeedChange;
+
+    public static Action<GameObject, int, int> onBallHealthChange;
+
+    public static Action<GameObject> onBallDeath;
+
+    public static Action<GameObject, Collision2D> on2DBallBounce;
 
 }
