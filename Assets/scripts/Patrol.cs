@@ -7,7 +7,9 @@ public class Patrol : MonoBehaviour
 
     public float walkSpeed = 5;
 
-    int walkDirection = 1;
+    // 1 is right -1 is left
+    int _walkDirection = 1;
+    public int WalkDirection => _walkDirection;
 
     [Space, SerializeField]
     UnityEvent OnHitWall;
@@ -15,13 +17,13 @@ public class Patrol : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // FixedUpdate is called once per physics update frame, with a fixed delta time
     void FixedUpdate()
     {
-        rb.linearVelocityX = walkSpeed * walkDirection;
+        rb.linearVelocityX = walkSpeed * _walkDirection;
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -31,15 +33,17 @@ public class Patrol : MonoBehaviour
         // If we collided with something relatively wall-shaped, reverse direction
         var contact = collision.GetContact(0);
         float dot = Vector2.Dot(contact.normal, Vector2.right);
-        if (Mathf.Abs(dot) > 0.5f)
+
+        // added a check for contact is not pointing upward (so we dont reverse on corners)
+        if (Mathf.Abs(dot) > 0.5f && contact.normal.y < 0.5f)
         {
             OnHitWall.Invoke();
             ReverseDirection();
         }
     }
-    
-    void ReverseDirection()
+
+    public void ReverseDirection()
     {
-        walkDirection = -walkDirection;
+        _walkDirection = -_walkDirection;
     }
 }
